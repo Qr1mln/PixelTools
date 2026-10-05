@@ -32,7 +32,7 @@ from .keyboard import KeyboardModule
 from .input_control import InputControlModule
 
 
-class DmPlugin(
+class PtPlugin(
     BaseModule,
     ImageColorModule,
     MouseModule,
@@ -52,7 +52,7 @@ class DmPlugin(
 
 
 __all__ = [
-    "DmPlugin",
+    "PtPlugin",
     "BaseModule",
     "ImageColorModule",
     "MouseModule",
