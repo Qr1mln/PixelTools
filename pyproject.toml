@@ -2,4 +2,9 @@
 name = "pixeltools"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "mss>=10.2.0",
+    "opencv-python>=5.0.0.93",
+    "pywin32>=312",
+    "windows-capture>=2.0.1",
+]

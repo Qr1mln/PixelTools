@@ -1,16 +1,11 @@
-# This is a sample Python script.
+import time
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from api import PtPlugin
+from show_result import show_found_points
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    pt = PtPlugin()
+    print(pt.ver())
+    is_bind = pt.bind_window(4135884, "gdi", "windows", "windows", 0)
+    print(is_bind)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
