@@ -1,10 +1,12 @@
 import logging
 
+import cv2
 import numpy as np
 import win32gui
-from mss import mss
+from mss import MSS
+from numpy._typing import NDArray
 
-logging.basicConfig(level=logging.INFO)
+from api import dpi
 
 class Window:
     def __init__(self):
@@ -45,21 +47,58 @@ class Window:
             logging.error(f"窗口句柄无效: {hwnd}")
             return False
 
+        # 进程需 DPI 感知，保证 ClientToScreen / mss 坐标统一为物理像素
+        dpi.set_dpi_aware()
+
         setattr(self, "hwnd", hwnd)
         # 获取窗口信息
 
-        top, left, width, height = win32gui.GetWindowRect(hwnd)
-        logging.info(f"窗口信息: {top},{left},{width},{height}")
+        # 客户区左上角在屏幕上的物理像素坐标（仅供信息/参考）
+        cx, cy = dpi.get_client_origin_physical(hwnd)
+        logging.info(f"客户区原点(物理): {cx},{cy}")
 
-        setattr(self, "ox", top)
-        setattr(self, "oy", left)
+        setattr(self, "ox", cx)
+        setattr(self, "oy", cy)
         return True
 
-    def screenshot(self):
-        """全屏截图，返回 (H, W, 3) 的 RGB numpy 数组。"""
-        with mss() as sct:
-            mon = sct.monitors[1]  # 主显示器
-            shot = sct.grab(mon)
-            return np.frombuffer(shot.rgb, dtype=np.uint8).reshape(
-                shot.height, shot.width, 3
-            )
+    def screenshot(self,x1:int | None=None,y1:int | None=None,x2:int | None=None,y2:int | None=None)-> NDArray[np.float64]:
+        """
+        全屏截图或指定区域截图，返回 (H, W, 3) 的 RGB numpy 数组。
+        ox, oy: 客户端左上角在屏幕上的坐标
+
+
+        参数:
+        x1, y1: 左上角坐标 (可选)
+        x2, y2: 右下角坐标 (可选)
+        若全部为 None，则截取主显示器全屏。
+        """
+        """返回 RGB ndarray，可写。"""
+        with MSS() as sct:
+            mon = sct.monitors[1]
+            # 如果没有指定坐标，则截取主显示器全屏。
+            if x1 is None or y1 is None or x2 is None or y2 is None:
+                region = {"left": mon["left"], "top": mon["top"],
+                          "width": mon["width"], "height": mon["height"]}
+            else:
+                # DPI 感知已开启，ClientToScreen 直接把客户区逻辑坐标映射到物理屏幕坐标，
+                # 系统已自动完成 DPI 缩放换算，无需手动乘 scale。
+                hwnd = getattr(self, "hwnd")
+                p1 = win32gui.ClientToScreen(hwnd, (x1, y1))
+                p2 = win32gui.ClientToScreen(hwnd, (x2, y2))
+                sx1, sy1 = p1
+                sx2, sy2 = p2
+                logging.info(f"屏幕坐标: ({sx1},{sy1}) - ({sx2},{sy2})")
+
+                left = max(min(sx1, sx2), mon["left"])
+                top = max(min(sy1, sy2), mon["top"])
+                right = min(max(sx1, sx2), mon["left"] + mon["width"])
+                bottom = min(max(sy1, sy2), mon["top"] + mon["height"])
+                w = right - left
+                h = bottom - top
+                if w <= 0 or h <= 0:
+                    return np.zeros((0, 0, 3), dtype=np.uint8)
+                region = {"left": left, "top": top, "width": w, "height": h}
+
+            shot = sct.grab(region)
+            rgb = np.frombuffer(shot.rgb, dtype=np.uint8).reshape(shot.height, shot.width, 3)
+            return np.array(rgb, copy=True)  # 可写 RGB

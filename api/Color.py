@@ -51,7 +51,7 @@ class Color:
     def __init__(self):
         ...
 
-    def findColor(self,x1, y1, x2, y2, color, sim=None, mode=0)-> tuple[bool, int, int]:
+    def findColor(self,x1, y1, x2, y2, color, sim=None, mode=0)-> tuple[int, int]:
         """
         函数简介:
 
@@ -81,8 +81,8 @@ class Color:
         intX 变参指针:返回X坐标
         intY 变参指针:返回Y坐标
 
-        返回值: bool 成功/失败
-        :return:
+        返回值: (x, y) 命中坐标；未找到返回 (-1, -1)
+        :return: tuple[int, int]
         """
 
         # 统一转成"主色-偏色"字符串形式
@@ -92,18 +92,18 @@ class Color:
             color_str = '%02X%02X%02X-000000' % tuple(color)
         else:
             raise ValueError('color 格式错误')
-
-        img_rgb = self.screenshot()  # (H, W, 3) RGB
-        H, W = img_rgb.shape[:2]
-
-        x1 = max(0, x1);
+        # 裁剪非法坐标后，直接截客户区矩形。
+        # screenshot 内部已用 ClientToScreen 完成 DPI 映射，无需手动修正。
+        x1 = max(0, x1)
         y1 = max(0, y1)
-        x2 = min(W - 1, x2);
-        y2 = min(H - 1, y2)
-        if x1 > x2 or y1 > y2:
-            return False, -1, -1
+        x2 = max(x1, x2)
+        y2 = max(y1, y2)
+        img_rgb = self.screenshot(x1, y1, x2, y2)  # (H, W, 3) RGB
+        H, W = img_rgb.shape[:2]
+        if H == 0 or W == 0:
+            return -1, -1
 
-        region = img_rgb[y1:y2 + 1, x1:x2 + 1]
+        region = img_rgb  # 整张即为目标区域，不再二次裁切
 
         # 偏色掩码
         mask = multi_color_mask(region, color_str)
@@ -119,7 +119,7 @@ class Color:
             mask = cv2.bitwise_and(mask, sim_mask)
 
         if not mask.any():
-            return False, -1, -1
+            return -1, -1
 
         # 按 mode 找第一个点
         ys, xs = np.where(mask > 0)
@@ -134,4 +134,4 @@ class Color:
         else:
             idx = np.argmin((h - ys) * w + (w - xs))
 
-        return True, x1 + int(xs[idx]), y1 + int(ys[idx])
+        return int(xs[idx]), int(ys[idx])
