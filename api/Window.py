@@ -7,7 +7,7 @@ class Window:
     def __init__(self):
        ...
 
-    def bind(self, hwnd: int=0,title: str|None=None,clazz:str|None=None, display: str="normal", mouse: str="normal", keypad: str="normal", mode: int=0)-> bool:
+    def bind_window(self, hwnd: int=0, title: str | None=None, clazz: str | None=None, display: str= "normal", mouse: str= "normal", keypad: str= "normal", mode: int=0)-> bool:
         """
          * BindWindow - 绑定窗口
          * 功能：绑定指定窗口，并设置图色、鼠标、键盘仿真模式及绑定模式。
