@@ -1,11 +1,10 @@
 import time
 
-from api import PtPlugin
-from show_result import show_found_points
+from api import PTPlugin
 
 if __name__ == '__main__':
-    pt = PtPlugin()
-    print(pt.ver())
-    is_bind = pt.bind_window(4135884, "gdi", "windows", "windows", 0)
+    pt = PTPlugin()
+    print(pt.version())
+    is_bind = pt.bind_window(title="Last Epoch", clazz="UnityWndClass")
     print(is_bind)
 

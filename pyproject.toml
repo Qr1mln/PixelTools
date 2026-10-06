@@ -8,3 +8,7 @@ dependencies = [
     "pywin32>=312",
     "windows-capture>=2.0.1",
 ]
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+
