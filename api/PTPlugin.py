@@ -1,7 +1,8 @@
+from api.Color import Color
 from api.Window import Window
 
 
-class PTPlugin(Window):
+class PTPlugin(Window,Color):
     def __init__(self):
         super().__init__()
         self._version = "1.0.0"
@@ -11,3 +12,4 @@ class PTPlugin(Window):
 
     def version(self) -> str:
         return self._version
+

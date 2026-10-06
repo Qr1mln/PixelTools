@@ -1,6 +1,9 @@
 import logging
 
+import numpy as np
 import win32gui
+from mss import mss
+
 logging.basicConfig(level=logging.INFO)
 
 class Window:
@@ -51,3 +54,12 @@ class Window:
         setattr(self, "ox", top)
         setattr(self, "oy", left)
         return True
+
+    def screenshot(self):
+        """全屏截图，返回 (H, W, 3) 的 RGB numpy 数组。"""
+        with mss() as sct:
+            mon = sct.monitors[1]  # 主显示器
+            shot = sct.grab(mon)
+            return np.frombuffer(shot.rgb, dtype=np.uint8).reshape(
+                shot.height, shot.width, 3
+            )
