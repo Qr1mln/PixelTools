@@ -6,7 +6,7 @@ import win32gui
 from mss import MSS
 from numpy._typing import NDArray
 
-from api import dpi, PTPlugin
+from api import dpi
 
 class Window:
     def __init__(self):
@@ -34,7 +34,7 @@ class Window:
             else:
                 # DPI 感知已开启，ClientToScreen 直接把客户区逻辑坐标映射到物理屏幕坐标，
                 # 系统已自动完成 DPI 缩放换算，无需手动乘 scale。
-                hwnd = PTPlugin.hwnd
+                hwnd = cls.hwnd
                 p1 = win32gui.ClientToScreen(hwnd, (x1, y1))
                 p2 = win32gui.ClientToScreen(hwnd, (x2, y2))
                 sx1, sy1 = p1
@@ -95,15 +95,15 @@ class Window:
         # 进程需 DPI 感知，保证 ClientToScreen / mss 坐标统一为物理像素
         dpi.set_dpi_aware()
 
-        PTPlugin.hwnd = hwnd
+        cls.hwnd = hwnd
         # 获取窗口信息
 
         # 客户区左上角在屏幕上的物理像素坐标（仅供信息/参考）
         cx, cy = dpi.get_client_origin_physical(hwnd)
         logging.info(f"客户区原点(物理): {cx},{cy}")
-        PTPlugin.ox = cx
-        PTPlugin.oy = cy
-        PTPlugin.is_bind = 1
+        cls.ox = cx
+        cls.oy = cy
+        cls.is_bind = 1
         return True
 
     @classmethod
@@ -112,7 +112,7 @@ class Window:
         取消绑定窗口
         :return:
         """
-        PTPlugin.hwnd = 0
-        PTPlugin.ox = 0
-        PTPlugin.oy = 0
-        PTPlugin.is_bind = 0
+        cls.hwnd = 0
+        cls.ox = 0
+        cls.oy = 0
+        cls.is_bind = 0
