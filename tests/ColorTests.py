@@ -88,43 +88,45 @@ class TestMultiColorMask(unittest.TestCase):
         self.assertEqual(mask[5, 5], 0)
 
 
-class TestPTPlugin(unittest.TestCase):
+def _patch_image(img):
+    # screenshot 方法在 Window(即 PTPlugin.window) 上，patch 这里才能被 findColor 命中
+    return patch.object(PTPlugin.window, 'screenshot', return_value=img)
 
-    def _patch_image(self, img):
-        return patch.object(PTPlugin, 'screenshot', return_value=img)
+
+class TestPTPlugin(unittest.TestCase):
 
     # ---------- 基础 ----------
     def test_found_exact(self):
         img = make_image(points={(3, 5): (255, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-000000")
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-000000")
         self.assertEqual((x, y), (3, 5))
 
     def test_not_found(self):
         img = make_image(fill=(0, 0, 0))
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-000000")
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-000000")
         self.assertEqual((x, y), (-1, -1))
 
     # ---------- 偏色 ----------
     def test_found_with_offset(self):
         img = make_image(points={(7, 2): (250, 5, 5)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-101010")
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-101010")
         self.assertEqual((x, y), (7, 2))
 
     def test_offset_reject(self):
         img = make_image(points={(7, 2): (200, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-101010")
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-101010")
         
 
     # ---------- 多颜色 ----------
     def test_multi_color_string(self):
         # 只有 aabbcc 存在
         img = make_image(points={(4, 4): (0xAA, 0xBB, 0xCC)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(
                 0, 0, 19, 19, "123456-000000|aabbcc-202020"
             )
         self.assertEqual((x, y), (4, 4))
@@ -133,21 +135,21 @@ class TestPTPlugin(unittest.TestCase):
     def test_region_clip(self):
         # 目标在 (5,5)，但查找区域从 (10,10) 开始，应找不到
         img = make_image(points={(5, 5): (255, 0, 0)})
-        with self._patch_image(img):
-            _, _ = PTPlugin().findColor(10, 10, 19, 19, "FF0000-000000")
+        with _patch_image(img):
+            _, _ = PTPlugin.Color.findColor(10, 10, 19, 19, "FF0000-000000")
         
 
     def test_region_out_of_bounds(self):
         img = make_image(h=10, w=10)
-        with self._patch_image(img):
+        with _patch_image(img):
             # 越界要裁剪，不能报错
-            _, _ = PTPlugin().findColor(-5, -5, 100, 100, "FF0000-000000")
+            _, _ = PTPlugin.Color.findColor(-5, -5, 100, 100, "FF0000-000000")
         
 
     def test_invalid_region(self):
         img = make_image()
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(10, 10, 5, 5, "FF0000-000000")
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(10, 10, 5, 5, "FF0000-000000")
         self.assertEqual((x, y), (-1, -1))
 
     # ---------- mode 扫描方向 ----------
@@ -155,61 +157,61 @@ class TestPTPlugin(unittest.TestCase):
         # 两个命中点，(2,2) 和 (8,8)，mode 0 应返回 (2,2)
         img = make_image(points={(2, 2): (255, 0, 0),
                                  (8, 8): (255, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-000000", mode=0)
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-000000", mode=0)
         self.assertEqual((x, y), (2, 2))
 
     def test_mode1_bottom_left(self):
         # mode 1 下->上，左->右，应返回 (2,8)
         img = make_image(points={(2, 2): (255, 0, 0),
                                  (2, 8): (255, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-000000", mode=1)
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-000000", mode=1)
         self.assertEqual((x, y), (2, 8))
 
     def test_mode2_top_right(self):
         # mode 2 上->下，右->左，应返回 (8,2)
         img = make_image(points={(2, 2): (255, 0, 0),
                                  (8, 2): (255, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-000000", mode=2)
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-000000", mode=2)
         self.assertEqual((x, y), (8, 2))
 
     def test_mode3_bottom_right(self):
         # mode 3 下->上，右->左，应返回 (8,8)
         img = make_image(points={(2, 2): (255, 0, 0),
                                  (8, 8): (255, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, "FF0000-000000", mode=3)
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-000000", mode=3)
         self.assertEqual((x, y), (8, 8))
 
     # ---------- sim 相似度 ----------
     def test_sim_pass(self):
         img = make_image(points={(3, 3): (250, 5, 5)})
-        with self._patch_image(img):
+        with _patch_image(img):
             # 偏色足够 -> 命中
-            _, _ = PTPlugin().findColor(0, 0, 19, 19, "FF0000-101010", sim=0.9)
+            _, _ = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-101010", sim=0.9)
 
     def test_sim_reject(self):
         img = make_image(points={(3, 3): (250, 5, 5)})
-        with self._patch_image(img):
+        with _patch_image(img):
             # 相似度 0.99 应拒绝 (1 - 15/765 ≈ 0.98)
-            _, _ = PTPlugin().findColor(0, 0, 19, 19, "FF0000-101010", sim=0.99)
+            _, _ = PTPlugin.Color.findColor(0, 0, 19, 19, "FF0000-101010", sim=0.99)
         
 
     # ---------- 元组颜色 ----------
     def test_tuple_color(self):
         img = make_image(points={(6, 6): (255, 0, 0)})
-        with self._patch_image(img):
-            x, y = PTPlugin().findColor(0, 0, 19, 19, (255, 0, 0))
+        with _patch_image(img):
+            x, y = PTPlugin.Color.findColor(0, 0, 19, 19, (255, 0, 0))
         self.assertEqual((x, y), (6, 6))
 
     # ---------- 异常 ----------
     def test_invalid_color_type(self):
         img = make_image()
-        with self._patch_image(img):
+        with _patch_image(img):
             with self.assertRaises(ValueError):
-                PTPlugin().findColor(0, 0, 19, 19, 12345)
+                PTPlugin.Color.findColor(0, 0, 19, 19, 12345)
 
 
 if __name__ == '__main__':

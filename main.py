@@ -11,3 +11,5 @@ if __name__ == '__main__':
     print(is_bind)
     Debug.preview(pt.screenshot(446,979,575,997),"test",x,y,color=(0,255,0))
 
+    pt.unbind_window()
+

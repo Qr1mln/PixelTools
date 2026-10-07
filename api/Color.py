@@ -50,8 +50,8 @@ def multi_color_mask(region_rgb, color_str):
 class Color:
     def __init__(self):
         ...
-
-    def findColor(self,x1, y1, x2, y2, color, sim=None, mode=0)-> tuple[int, int]:
+    @staticmethod
+    def findColor(x1, y1, x2, y2, color, sim=None, mode=0)-> tuple[int, int]:
         """
         函数简介:
 
@@ -98,7 +98,9 @@ class Color:
         y1 = max(0, y1)
         x2 = max(x1, x2)
         y2 = max(y1, y2)
-        img_rgb = self.screenshot(x1, y1, x2, y2)  # (H, W, 3) RGB
+        # screenshot 实际在 Window 上，惰性导入避免与 PTPlugin/Color 的循环依赖
+        from api import PTPlugin
+        img_rgb = PTPlugin.window.screenshot(x1, y1, x2, y2)  # (H, W, 3) RGB
         H, W = img_rgb.shape[:2]
         if H == 0 or W == 0:
             return -1, -1
@@ -135,3 +137,43 @@ class Color:
             idx = np.argmin((h - ys) * w + (w - xs))
 
         return int(xs[idx]), int(ys[idx])
+
+    """
+    FindMultiColor 的最大优势是：不依赖图片，靠多点颜色特征定位，速度快、误判低、抗干扰强，特别适合游戏/自动化脚本里找动态或半透明的 UI 元素。
+    前提是：特征点要选得稳定、独特、高对比，偏色和相似度也要调得合理。。
+    """
+
+    @staticmethod
+    def find_multi_color(cls,x1, y1, x2, y2, first_color,offset_color, sim=None, mode=0)-> tuple[int, int]:
+        """
+        函数简介:
+
+        根据指定的多点查找颜色坐标
+
+        函数原型:
+
+        long FindMultiColor(x1, y1, x2, y2,first_color,offset_color,sim, mode)
+
+        参数定义:
+
+        x1 整形数:区域的左上X坐标
+        y1 整形数:区域的左上Y坐标
+        x2 整形数:区域的右下X坐标
+        y2 整形数:区域的右下Y坐标
+        first_color 字符串:颜色格式为"RRGGBB-DRDGDB|RRGGBB-DRDGDB|…………",比如"123456-000000"
+
+        这里的含义和按键自带Color插件的意义相同，只不过我的可以支持偏色和多种颜色组合
+
+        所有的偏移色坐标都相对于此颜色.注意，这里只支持RGB颜色.
+        offset_color 字符串: 偏移颜色可以支持任意多个点 格式和按键自带的Color插件意义相同, 只不过我的可以支持偏色和多种颜色组合
+
+         格式为"x1|y1|RRGGBB-DRDGDB|RRGGBB-DRDGDB……,……xn|yn|RRGGBB-DRDGDB|RRGGBB-DRDGDB……"
+
+        比如"1|3|aabbcc|aaffaa-101010,-5|-3|123456-000000|454545-303030|565656"等任意组合都可以，支持偏色
+
+        sim 双精度浮点数:相似度,取值范围0.1-1.0
+        mode 整形数:查找方向 0: 从左到右,从上到下 1: 从左到右,从下到上 2: 从右到左,从上到下 3: 从右到左, 从下到上
+
+        返回值:
+        """
+
