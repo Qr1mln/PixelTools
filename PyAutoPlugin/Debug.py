@@ -23,7 +23,7 @@ class Debug:
     """截图可视化调试工具类。
 
     用 cv2.imshow 展示 RGB 截图，并可在图上标记命中点 (x, y)。
-    作为 mixin 挂到 PTPlugin 上，也可独立调用 Debug().preview(...) / Debug().show(...)。
+    作为 mixin 挂到 Plugin 上，也可独立调用 Debug().preview(...) / Debug().show(...)。
     """
     @staticmethod
     def preview(img_rgb: np.ndarray,

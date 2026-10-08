@@ -6,7 +6,7 @@ import win32gui
 from mss import MSS
 from numpy._typing import NDArray
 
-from api import dpi
+from PyAutoPlugin import dpi
 
 class Window:
     def __init__(self):
@@ -39,7 +39,7 @@ class Window:
                 p2 = win32gui.ClientToScreen(hwnd, (x2, y2))
                 sx1, sy1 = p1
                 sx2, sy2 = p2
-                logging.info(f"屏幕坐标: ({sx1},{sy1}) - ({sx2},{sy2})")
+                logging.debug(f"屏幕坐标: ({sx1},{sy1}) - ({sx2},{sy2})")
 
                 left = max(min(sx1, sx2), mon["left"])
                 top = max(min(sy1, sy2), mon["top"])

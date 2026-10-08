@@ -183,9 +183,9 @@ class Color:
         y1 = max(0, y1)
         x2 = max(x1, x2)
         y2 = max(y1, y2)
-        # screenshot 实际在 Window 上，惰性导入避免与 PTPlugin/Color 的循环依赖
-        from api import PTPlugin
-        img_rgb = PTPlugin.screenshot(x1, y1, x2, y2)  # (H, W, 3) RGB
+        # screenshot 实际在 Window 上，惰性导入避免与 Plugin/Color 的循环依赖
+        from PyAutoPlugin import Plugin
+        img_rgb = Plugin.screenshot(x1, y1, x2, y2)  # (H, W, 3) RGB
         H, W = img_rgb.shape[:2]
         if H == 0 or W == 0:
             return -1, -1
@@ -272,8 +272,8 @@ class Color:
         # ---- 2. 裁剪坐标 + 截图 ----
         x1 = max(0, x1); y1 = max(0, y1)
         x2 = max(x1, x2); y2 = max(y1, y2)
-        from api import PTPlugin
-        img = PTPlugin.screenshot(x1, y1, x2, y2)   # (H, W, 3) RGB
+        from PyAutoPlugin import Plugin
+        img = Plugin.screenshot(x1, y1, x2, y2)   # (H, W, 3) RGB
         H, W = img.shape[:2]
         if H == 0 or W == 0:
             return -1, -1
@@ -348,8 +348,8 @@ class Color:
 
         x1 = max(0, x1); y1 = max(0, y1)
         x2 = max(x1, x2); y2 = max(y1, y2)
-        from api import PTPlugin
-        img = PTPlugin.screenshot(x1, y1, x2, y2)
+        from PyAutoPlugin import Plugin
+        img = Plugin.screenshot(x1, y1, x2, y2)
         H, W = img.shape[:2]
         if H == 0 or W == 0:
             return []
@@ -367,7 +367,6 @@ class Color:
             return []
 
         ys, xs = np.where(main_mask)
-        n_candidates = len(xs)
         results = []
         n_passed = 0
         for cx, cy in zip(xs.tolist(), ys.tolist()):
@@ -376,10 +375,4 @@ class Color:
                 n_passed += 1
                 if len(results) >= max_count:
                     break
-        # ---- DEBUG ----
-        print(f"[findMultiColorEx DEBUG] 区域=({x1},{y1},{x2},{y2}) "
-              f"主色={first_str} sim={sim} "
-              f"候选主色点数={n_candidates} 通过偏移校验点数={n_passed} "
-              f"返回点数={len(results)}")
-        # ---------------
         return results

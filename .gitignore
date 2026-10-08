@@ -12,3 +12,7 @@ venv/
 # OS
 Thumbs.db
 .DS_Store
+
+# Secrets / build artifacts
+.pypirc
+dist/
